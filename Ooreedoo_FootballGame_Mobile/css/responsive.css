@@ -1,0 +1,95 @@
+@media(min-width: 1600px){
+	
+}
+@media(max-width: 1199px){
+	
+}
+@media(max-width: 1024px){
+	.mainBox .mainFlex .right {
+	    width: 26.66%;
+	}
+}
+@media(max-width: 991px){
+	.mainBox .mainFlex .middle{
+		width: 29%;
+	}
+}
+@media(max-width:767px){
+	header{
+	    padding: 10px 15px;
+	    background-size: 70px;
+	    height: 70px;
+	}
+
+	header .ignitionLogo{
+		text-align: right;
+	}
+	header .ignitionLogo img{
+		max-width: 100px;
+	}
+	header .brandName h2{
+	    font-size: 14px;
+    	margin-bottom: 5px;
+	}
+	header .brandName h3{
+		font-size: 12px;
+	}
+	.mainBox .mainFlex .left,
+	.mainBox .mainFlex .middle,
+	.mainBox .mainFlex .right{
+		width: 100%;
+		border-right: 0px;
+	}
+	.mainBox .mainFlex .left .adArea .ceativeAd{
+		width: 100%;
+	    margin-bottom: 10px;
+	}	
+	.mainBox .mainFlex .left .adArea{
+		-ms-flex-wrap: wrap;
+		flex-wrap: wrap
+	}
+	.textLines{
+		padding: 0;
+	}
+	.ceativeAd img{
+		width: 100%;
+	}
+	.mainBox .topHeader{
+		height: 50px;
+	}
+	.mainBox .mainFlex .middle,
+	.textLines.paddingLeftNone{
+		display: none;
+	}
+}
+@media(max-width:480px){
+	header .brandName{
+		width: 40%
+	}
+	.mainBox .mainFlex{
+		text-align: center;
+	}
+}
+@media only screen and (max-device-width:812px) and (orientation:landscape) {
+	.mainBox .mainFlex .middle{
+		width: 24%
+	}
+}
+@media only screen and (max-device-width:667px) and (orientation:landscape) {
+	.mainBox .mainFlex .left .adArea{
+	    display: -webkit-box;
+	    display: -ms-flexbox;
+	    display: flex;
+	    -ms-flex-wrap: nowrap;
+		flex-wrap: nowrap;
+	}
+	.textLines{
+		padding-left: 10px;
+	}
+	.mainBox .mainFlex .left{
+		width: auto;
+	}
+	.mainBox .mainFlex .right{
+		width: 50%
+	}
+}
