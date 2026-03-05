@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AR Home Exploration</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+body{
+margin:0;
+overflow:hidden;
+font-family:Arial;
+}
+
+#info{
+position:absolute;
+top:10px;
+left:10px;
+background:white;
+padding:10px;
+border-radius:6px;
+z-index:2;
+}
+</style>
+</head>
+
+<body>
+
+<div id="info">Tap the Juice Pack 🍹</div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.128/build/three.module.js";
+import { ARButton } from "https://cdn.jsdelivr.net/npm/three@0.128/examples/jsm/webxr/ARButton.js";
+
+let scene, camera, renderer;
+let juicePack, glass, juice;
+
+init();
+animate();
+
+function init(){
+
+scene = new THREE.Scene();
+
+camera = new THREE.PerspectiveCamera(
+70,
+window.innerWidth/window.innerHeight,
+0.01,
+20
+);
+
+renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.xr.enabled = true;
+
+document.body.appendChild(renderer.domElement);
+document.body.appendChild(ARButton.createButton(renderer));
+
+const light = new THREE.HemisphereLight(0xffffff,0xbbbbff,1);
+scene.add(light);
+
+createHouse();
+createDiningArea();
+
+}
+
+function createHouse(){
+
+const house = new THREE.Group();
+
+const floor = new THREE.Mesh(
+new THREE.BoxGeometry(2,0.05,2),
+new THREE.MeshStandardMaterial({color:0xf5f5f5})
+);
+
+house.add(floor);
+
+const wallMaterial = new THREE.MeshStandardMaterial({color:0xffffff});
+
+const wall1 = new THREE.Mesh(
+new THREE.BoxGeometry(2,1,0.05),
+wallMaterial
+);
+wall1.position.set(0,0.5,-1);
+
+const wall2 = wall1.clone();
+wall2.position.z = 1;
+
+const wall3 = new THREE.Mesh(
+new THREE.BoxGeometry(0.05,1,2),
+wallMaterial
+);
+wall3.position.set(-1,0.5,0);
+
+const wall4 = wall3.clone();
+wall4.position.x = 1;
+
+house.add(wall1,wall2,wall3,wall4);
+
+scene.add(house);
+
+}
+
+function createDiningArea(){
+
+const table = new THREE.Mesh(
+new THREE.BoxGeometry(0.8,0.05,0.8),
+new THREE.MeshStandardMaterial({color:0x8b4513})
+);
+
+table.position.set(0,0.4,0);
+scene.add(table);
+
+juicePack = new THREE.Mesh(
+new THREE.BoxGeometry(0.15,0.25,0.1),
+new THREE.MeshStandardMaterial({color:0xff6600})
+);
+
+juicePack.position.set(-0.2,0.55,0);
+scene.add(juicePack);
+
+glass = new THREE.Mesh(
+new THREE.CylinderGeometry(0.08,0.08,0.2,32),
+new THREE.MeshStandardMaterial({
+color:0xffffff,
+transparent:true,
+opacity:0.4
+})
+);
+
+glass.position.set(0.2,0.5,0);
+scene.add(glass);
+
+juice = new THREE.Mesh(
+new THREE.CylinderGeometry(0.07,0.07,0.01,32),
+new THREE.MeshStandardMaterial({color:0xff8800})
+);
+
+juice.position.set(0.2,0.41,0);
+scene.add(juice);
+
+}
+
+window.addEventListener("click",function(){
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2(0,0);
+
+raycaster.setFromCamera(mouse,camera);
+
+const intersects = raycaster.intersectObject(juicePack);
+
+if(intersects.length > 0){
+
+fillJuice();
+
+}
+
+});
+
+function fillJuice(){
+
+let level = 0;
+
+const interval = setInterval(function(){
+
+level += 0.005;
+
+juice.scale.y += 0.2;
+juice.position.y += 0.002;
+
+if(level > 0.18){
+
+clearInterval(interval);
+
+}
+
+},30);
+
+}
+
+function animate(){
+
+renderer.setAnimationLoop(render);
+
+}
+
+function render(){
+
+renderer.render(scene,camera);
+
+}
+
+</script>
+
+</body>
+</html>
