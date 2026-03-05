@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Liquid Glass</title>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+
+body{
+margin:0;
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#0e0e0e;
+overflow:hidden;
+font-family:Arial;
+}
+
+/* Glass container */
+
+.glass{
+width:220px;
+height:360px;
+border:5px solid rgba(255,255,255,0.8);
+border-bottom-left-radius:50px;
+border-bottom-right-radius:50px;
+position:relative;
+overflow:hidden;
+box-shadow:0 0 30px rgba(0,0,0,0.5) inset;
+}
+
+/* Canvas */
+
+canvas{
+position:absolute;
+bottom:0;
+left:0;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="glass">
+<canvas id="liquidCanvas"></canvas>
+</div>
+
+<script>
+
+const canvas = document.getElementById("liquidCanvas");
+const ctx = canvas.getContext("2d");
+
+const glass = document.querySelector(".glass");
+
+let width = glass.clientWidth;
+let height = glass.clientHeight;
+
+canvas.width = width;
+canvas.height = height;
+
+/* Liquid settings */
+
+let liquidLevel = height * 0.65;
+let tilt = 0;
+let velocity = 0;
+let wavePoints = 40;
+
+let points = [];
+
+for(let i=0;i<=wavePoints;i++){
+points.push({
+x:(width/wavePoints)*i,
+y:liquidLevel
+});
+}
+
+/* Device Tilt */
+
+if(window.DeviceOrientationEvent){
+
+window.addEventListener("deviceorientation", function(e){
+
+tilt = e.gamma / 30;
+
+});
+
+}
+
+/* Desktop fallback */
+
+document.addEventListener("mousemove",function(e){
+
+let percent = (e.clientX / window.innerWidth) - 0.5;
+
+tilt = percent * 2;
+
+});
+
+/* Physics update */
+
+function update(){
+
+velocity += tilt * 0.1;
+
+velocity *= 0.92;
+
+for(let i=0;i<points.length;i++){
+
+let offset = Math.sin((i + Date.now()*0.002)) * velocity * 10;
+
+points[i].y = liquidLevel + offset;
+
+}
+
+/* Drinking effect */
+
+if(Math.abs(tilt) > 0.8){
+
+liquidLevel += 0.2;
+
+if(liquidLevel > height-20){
+liquidLevel = height-20;
+}
+
+}
+
+}
+
+/* Draw liquid */
+
+function draw(){
+
+ctx.clearRect(0,0,width,height);
+
+ctx.beginPath();
+
+ctx.moveTo(0, height);
+
+ctx.lineTo(0, points[0].y);
+
+for(let i=0;i<points.length;i++){
+
+ctx.lineTo(points[i].x, points[i].y);
+
+}
+
+ctx.lineTo(width, height);
+
+ctx.closePath();
+
+let gradient = ctx.createLinearGradient(0,0,0,height);
+
+gradient.addColorStop(0,"#00c6ff");
+gradient.addColorStop(1,"#0072ff");
+
+ctx.fillStyle = gradient;
+
+ctx.fill();
+
+}
+
+/* Animation loop */
+
+function animate(){
+
+update();
+
+draw();
+
+requestAnimationFrame(animate);
+
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
