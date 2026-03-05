@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, width=device-width, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta charset="UTF-8"/>
+<title>Pepsi</title>
+
+<style>
+
+	.mainDiv{
+		width:320px;
+		height:480px;
+		border:#000 1px solid;
+	}
+
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script type="text/javascript">
+
+var isGlassFull = true;
+function motion(event){
+ /* document.getElementById("accelerometer").innerHTML = "Accelerometer: "
+    + event.accelerationIncludingGravity.x + ", "
+    + event.accelerationIncludingGravity.y + ", "
+    + event.accelerationIncludingGravity.z;*/
+	if(event.accelerationIncludingGravity.x>=8 && isGlassFull){
+		isGlassFull = false;
+		drop();
+	}
+	
+	if(event.accelerationIncludingGravity.x<=-8 && isGlassFull){
+		isGlassFull = false;
+		drop();
+	}
+	
+}
+
+function orientation(event){
+  /*document.getElementById("magnetometer").innerHTML = "Magnetometer: "
+    + event.alpha + ", "
+    + event.beta + ", "
+    + event.gamma;*/
+}
+
+function go(){
+  if(window.DeviceMotionEvent){
+    window.addEventListener("devicemotion", motion, false);
+  }else{
+    var status = document.getElementById("status");
+    status.innerHTML = status.innerHTML.replace(
+      "is supported", "is not supported"
+    );
+  }
+  if(window.DeviceOrientationEvent){
+    window.addEventListener("deviceorientation", orientation, false);
+  }else{
+    var status = document.getElementById("status");
+    status.innerHTML = status.innerHTML.replace(
+      "is supported", "is not supported"
+    );
+  }
+}
+</script>
+
+<script>
+	
+
+function drop(){
+	timeToStop = false;
+	gameLoop();	
+}
+
+</script>
+
+
+<script>
+	var coin;
+	var coinImage;
+	var timeToStop = false;
+	
+	
+	window.addEventListener('load', init, false);
+	
+	function init(){
+		
+		getCanvas(2);
+		//coinImage.addEventListener("load", gameLoop);
+		coinImage.addEventListener("load", drawFirst);
+		coinImage.src = "images/pepsi.jpg";
+		
+	}
+	//
+	function drawFirst(){
+		$('#canvas').fadeIn(1000);
+		go();
+		canvas = document.getElementById("canvas");
+		context =  canvas.getContext("2d");
+		
+		canvas.width = 320;
+		canvas.height = 480;
+			
+		  // Draw the animation
+		  context.drawImage(coinImage,0,0);
+	}
+	//
+	function getCanvas(tt){
+		// Create sprite sheet
+		coinImage = new Image();	
+		
+		// Create sprite
+		coin = sprite({
+			context: canvas.getContext("2d"),
+			width: 1920,
+			height: 2400	,
+			image: coinImage,
+			numberOfFrames: 6,
+			ticksPerFrame: tt
+		});
+	}
+	
+	function gameLoop() {
+		//alert("timeToStop:  "+timeToStop)
+		if(!timeToStop){
+			window.requestAnimationFrame(gameLoop);
+			coin.update();
+			coin.render();
+		}
+		
+	}
+	
+	function sprite (options) {
+	
+		var that = {},
+			rr = 0;
+			frameIndex = 0,
+			tickCount = 0,
+			ticksPerFrame = options.ticksPerFrame || 0,
+			numberOfFrames = options.numberOfFrames || 1;
+		
+		that.context = options.context;
+		that.width = options.width;
+		that.height = options.height;
+		that.image = options.image;
+		
+		that.update = function () {
+	
+            tickCount += 1;
+			if(rr==0 && frameIndex==0){
+				//return;
+				//alert(rr+"   >>   "+frameIndex+" >>> "+numberOfFrames)
+				//timeToStop = true;
+				//frameIndex += 1;
+			}else{
+				
+			}
+			//document.getElementById('txt').innerHTML = tickCount;
+            if (tickCount > ticksPerFrame) {
+
+				tickCount = 0;
+                // If the current frame index is in range
+                if (frameIndex < numberOfFrames - 1) {	
+                    // Go to the next frame
+                    frameIndex += 1;
+                } else {
+					rr++;
+					frameIndex = 0;
+                }
+				
+				if(rr>=4 && frameIndex>=5){
+					//alert(" small complete")
+					timeToStop = true;
+					tickCount = 0;				
+				}
+			}
+        };
+		
+		that.render = function () {
+		
+		  // Clear the canvas
+		  that.context.clearRect(0, 0, that.width, that.height);
+			var rows = rr*480;
+		  // Draw the animation
+		  that.context.drawImage(
+		    that.image,
+		    frameIndex * that.width / numberOfFrames,
+		    rows,
+		    that.width / numberOfFrames,
+		    that.height,
+		    0,
+		    0,
+		    that.width / numberOfFrames,
+		    that.height);
+		};
+		
+		return that;
+	}
+	
+</script>
+
+</head>
+<body>
+<div id="accelerometer"></div>
+<div class="mainDiv">
+  <div id="loadingImgDiv" style="position:absolute; z-index:1" ><img src="images/loader.gif"/></div> 
+  <div style="position:absolute; z-index:2" ><canvas id = "canvas" width = "320" height = "480" ></canvas></div>
+  </div>
+<!--<button onClick="drop();">button</button>-->
+
+</body>
+</html>
