@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liquid Tilt Glass</title>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #1c1c1c;
+    overflow: hidden;
+    font-family: sans-serif;
+}
+
+.wrapper {
+    perspective: 1000px;
+}
+
+.glass {
+    width: 220px;
+    height: 320px;
+    border: 5px solid #ccc;
+    border-radius: 25px 25px 50px 50px;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    background: rgba(255,255,255,0.05);
+}
+
+.liquid {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60%;
+    background: linear-gradient(to top, #2196f3, #6dd5fa);
+    transform-origin: center top;
+    transition: height 0.3s ease;
+}
+
+.surface {
+    position: absolute;
+    top: -10px;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+}
+
+.instructions {
+    position: absolute;
+    bottom: 20px;
+    color: white;
+    font-size: 14px;
+    opacity: 0.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+    <div class="glass">
+        <div class="liquid">
+            <div class="surface"></div>
+        </div>
+    </div>
+</div>
+
+<div class="instructions">
+    Tilt your phone or move your mouse (desktop)
+</div>
+
+<script>
+$(function(){
+
+let glass = $('.glass');
+let liquid = $('.liquid');
+let liquidLevel = 60; // percentage
+let currentTiltX = 0;
+let currentTiltY = 0;
+let targetTiltX = 0;
+let targetTiltY = 0;
+
+const maxTilt = 25;
+const drinkThreshold = 35;
+
+// Smooth animation loop
+function animate() {
+    currentTiltX += (targetTiltX - currentTiltX) * 0.1;
+    currentTiltY += (targetTiltY - currentTiltY) * 0.1;
+
+    // Rotate glass
+    glass.css('transform', 
+        `rotateX(${currentTiltX}deg) rotateY(${currentTiltY}deg)`
+    );
+
+    // Liquid reacts opposite to tilt
+    liquid.css('transform', 
+        `rotate(${-currentTiltY * 1.2}deg)`
+    );
+
+    // Drinking effect (tilt forward)
+    if(currentTiltX > drinkThreshold && liquidLevel > 5){
+        liquidLevel -= 0.2;
+        liquid.css('height', liquidLevel + '%');
+    }
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+// MOBILE DEVICE TILT
+if (window.DeviceOrientationEvent) {
+
+    window.addEventListener("deviceorientation", function(event) {
+
+        targetTiltX = event.beta / 3;   // front/back
+        targetTiltY = event.gamma / 3;  // left/right
+
+        targetTiltX = Math.max(Math.min(targetTiltX, maxTilt), -maxTilt);
+        targetTiltY = Math.max(Math.min(targetTiltY, maxTilt), -maxTilt);
+
+    });
+}
+
+// DESKTOP FALLBACK (Mouse Move)
+$(document).on('mousemove', function(e){
+
+    let width = $(window).width();
+    let height = $(window).height();
+
+    let x = (e.clientX / width - 0.5) * 2;
+    let y = (e.clientY / height - 0.5) * 2;
+
+    targetTiltY = x * maxTilt;
+    targetTiltX = y * maxTilt;
+
+});
+
+});
+</script>
+
+</body>
+</html>
