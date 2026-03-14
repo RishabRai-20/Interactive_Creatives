@@ -27,7 +27,15 @@ padding:10px 20px;
 border-radius:20px;
 font-size:14px;
 }
+/*#ARButon{
 
+    border: 1px solid rgb(255, 255, 255) !important;
+    border-radius: 12px !important;
+    background: rgb(10 27 233) !important;
+    color: #ffffff !important;
+     opacity: 1 !important;
+   
+}*/
 
 </style>
 
@@ -79,9 +87,26 @@ renderer.xr.enabled = true;
 
 document.body.appendChild(renderer.domElement);
 
-document.body.appendChild(
+/*document.body.appendChild(
 ARButton.createButton(renderer,{ requiredFeatures:['hit-test'] })
-);
+);*/
+
+const arButton = ARButton.createButton(renderer, {
+  requiredFeatures: ['hit-test']
+});
+
+document.body.appendChild(arButton);
+
+// Detect AR session start
+renderer.xr.addEventListener("sessionstart", () => {
+  document.getElementById("ui").innerText = "Move phone to detect floor";
+});
+
+// Detect AR session end
+renderer.xr.addEventListener("sessionend", () => {
+  document.getElementById("ui").innerText = "AR session ended. Tap Start AR to begin again.";
+  housePlaced = false;
+});
 
 let light = new THREE.HemisphereLight(0xffffff,0xbbbbff,1);
 scene.add(light);
