@@ -1,17 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>AR Home Exploration</title>
-
-
-  <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
-
-<script src="https://unpkg.com/three@0.128.0/examples/js/webxr/ARButton.js"></script>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
 body{
@@ -20,7 +12,7 @@ overflow:hidden;
 font-family:Arial;
 }
 
-#message{
+#ui{
 position:absolute;
 top:20px;
 left:50%;
@@ -29,194 +21,212 @@ background:rgba(0,0,0,0.6);
 color:#fff;
 padding:10px 20px;
 border-radius:20px;
+font-size:14px;
 }
 </style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 </head>
 
 <body>
 
-<div id="message">Tap on floor to place house</div>
+<div id="ui">Move phone to detect floor</div>
 
-<script>
+<script type="module">
+
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { ARButton } from "https://unpkg.com/three@0.160.0/examples/jsm/webxr/ARButton.js";
 
 let scene, camera, renderer;
 let controller;
 let reticle;
 
+let housePlaced=false;
+
 let house;
+let juicePack;
 let glass;
 let juice;
 
-let raycaster = new THREE.Raycaster();
-let mouse = new THREE.Vector2();
+let raycaster=new THREE.Raycaster();
+let pointer=new THREE.Vector2();
+
+let hitTestSource=null;
+let hitTestSourceRequested=false;
 
 init();
 animate();
 
 function init(){
 
-scene = new THREE.Scene();
+scene=new THREE.Scene();
 
-camera = new THREE.PerspectiveCamera(
+camera=new THREE.PerspectiveCamera(
 70,
 window.innerWidth/window.innerHeight,
 0.01,
 20
 );
 
-renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.xr.enabled = true;
+renderer.xr.enabled=true;
 
 document.body.appendChild(renderer.domElement);
 
-document.body.appendChild(ARButton.createButton(renderer,{
-requiredFeatures:['hit-test']
-}));
-
-let light = new THREE.HemisphereLight(0xffffff,0xbbbbff,1);
-scene.add(light);
-
-controller = renderer.xr.getController(0);
-controller.addEventListener("select", onSelect);
-scene.add(controller);
-
-const geometry = new THREE.RingGeometry(0.15,0.2,32).rotateX(-Math.PI/2);
-
-reticle = new THREE.Mesh(
-geometry,
-new THREE.MeshBasicMaterial()
+document.body.appendChild(
+ARButton.createButton(renderer,{requiredFeatures:['hit-test']})
 );
 
-reticle.matrixAutoUpdate = false;
-reticle.visible = false;
+let light=new THREE.HemisphereLight(0xffffff,0xbbbbff,1);
+scene.add(light);
+
+controller=renderer.xr.getController(0);
+controller.addEventListener("select",onSelect);
+scene.add(controller);
+
+let geometry=new THREE.RingGeometry(0.15,0.2,32).rotateX(-Math.PI/2);
+
+reticle=new THREE.Mesh(
+geometry,
+new THREE.MeshBasicMaterial({color:0x00ff00})
+);
+
+reticle.matrixAutoUpdate=false;
+reticle.visible=false;
 
 scene.add(reticle);
+
+window.addEventListener("click",onClick);
 
 }
 
 function createHouse(){
 
-house = new THREE.Group();
+house=new THREE.Group();
 
-let floor = new THREE.Mesh(
+let floor=new THREE.Mesh(
 new THREE.BoxGeometry(1,0.02,1),
 new THREE.MeshStandardMaterial({color:0xf0f0f0})
 );
 
 house.add(floor);
 
-let table = new THREE.Mesh(
-new THREE.BoxGeometry(0.3,0.02,0.2),
+let table=new THREE.Mesh(
+new THREE.BoxGeometry(0.35,0.02,0.25),
 new THREE.MeshStandardMaterial({color:0x8b5a2b})
 );
 
-table.position.set(0,0.15,0);
+table.position.set(0,0.18,0);
 house.add(table);
 
-let legGeo = new THREE.BoxGeometry(0.02,0.15,0.02);
+let legGeo=new THREE.BoxGeometry(0.02,0.18,0.02);
 
 for(let i=0;i<4;i++){
 
-let leg = new THREE.Mesh(
+let leg=new THREE.Mesh(
 legGeo,
 new THREE.MeshStandardMaterial({color:0x8b5a2b})
 );
 
 leg.position.set(
-(i<2?-0.12:0.12),
-0.07,
-(i%2?-0.08:0.08)
+(i<2?-0.16:0.16),
+0.09,
+(i%2?-0.1:0.1)
 );
 
 house.add(leg);
+
 }
 
-let juicePack = new THREE.Mesh(
+juicePack=new THREE.Mesh(
 new THREE.BoxGeometry(0.05,0.12,0.05),
 new THREE.MeshStandardMaterial({color:0xff6600})
 );
 
-juicePack.position.set(-0.05,0.22,0);
+juicePack.position.set(-0.08,0.25,0);
 juicePack.name="juice";
 house.add(juicePack);
 
-glass = new THREE.Mesh(
-new THREE.CylinderGeometry(0.03,0.03,0.1,32,1,true),
-new THREE.MeshStandardMaterial({
-color:0xffffff,
+glass=new THREE.Mesh(
+new THREE.CylinderGeometry(0.035,0.035,0.12,32,1,true),
+new THREE.MeshPhysicalMaterial({
 transparent:true,
-opacity:0.3
+opacity:0.25,
+roughness:0,
+transmission:1
 })
 );
 
-glass.position.set(0.05,0.2,0);
+glass.position.set(0.08,0.25,0);
 house.add(glass);
 
-juice = new THREE.Mesh(
-new THREE.CylinderGeometry(0.028,0.028,0.001,32),
+juice=new THREE.Mesh(
+new THREE.CylinderGeometry(0.03,0.03,0.001,32),
 new THREE.MeshStandardMaterial({color:0xff8c00})
 );
 
-juice.position.set(0.05,0.15,0);
+juice.position.set(0.08,0.19,0);
 house.add(juice);
 
 scene.add(house);
 
 }
 
+function fillGlass(){
+
+let level=0;
+
+let fill=setInterval(()=>{
+
+level+=0.002;
+
+juice.scale.y=level*60;
+juice.position.y=0.19+(level/2);
+
+if(level>=0.12){
+clearInterval(fill);
+}
+
+},30);
+
+}
+
 function onSelect(){
 
-if(reticle.visible && !house){
+if(!housePlaced && reticle.visible){
 
 createHouse();
 
 house.position.setFromMatrixPosition(reticle.matrix);
 
-$("#message").text("Tap the juice pack");
+housePlaced=true;
 
-return;
+$("#ui").text("Walk around and tap the juice pack");
+
 }
 
-if(house){
+}
 
-raycaster.setFromCamera(mouse,camera);
+function onClick(event){
 
-let intersects = raycaster.intersectObjects(house.children);
+pointer.x=(event.clientX/window.innerWidth)*2-1;
+pointer.y=-(event.clientY/window.innerHeight)*2+1;
 
-if(intersects.length>0){
+raycaster.setFromCamera(pointer,camera);
 
-if(intersects[0].object.name=="juice"){
+let intersects=raycaster.intersectObjects(scene.children,true);
+
+intersects.forEach(obj=>{
+
+if(obj.object.name==="juice"){
 
 fillGlass();
 
 }
 
-}
-
-}
-
-}
-
-function fillGlass(){
-
-let level = 0;
-
-let fillInterval = setInterval(function(){
-
-level += 0.002;
-
-juice.scale.y = level*50;
-
-juice.position.y = 0.15 + level/2;
-
-if(level >= 0.1){
-
-clearInterval(fillInterval);
-
-}
-
-},30);
+});
 
 }
 
@@ -226,31 +236,31 @@ renderer.setAnimationLoop(render);
 
 }
 
-function render(timestamp, frame){
+function render(timestamp,frame){
 
 if(frame){
 
-const referenceSpace = renderer.xr.getReferenceSpace();
-const session = renderer.xr.getSession();
+const referenceSpace=renderer.xr.getReferenceSpace();
+const session=renderer.xr.getSession();
 
 if(!hitTestSourceRequested){
 
-session.requestReferenceSpace('viewer').then(function(referenceSpace){
+session.requestReferenceSpace('viewer').then(space=>{
 
-session.requestHitTestSource({space:referenceSpace}).then(function(source){
+session.requestHitTestSource({space:space}).then(source=>{
 
-hitTestSource = source;
-
-});
+hitTestSource=source;
 
 });
 
-hitTestSourceRequested = true;
+});
 
-session.addEventListener('end', function(){
+hitTestSourceRequested=true;
 
-hitTestSourceRequested = false;
-hitTestSource = null;
+session.addEventListener('end',()=>{
+
+hitTestSourceRequested=false;
+hitTestSource=null;
 
 });
 
@@ -258,13 +268,13 @@ hitTestSource = null;
 
 if(hitTestSource){
 
-const hitTestResults = frame.getHitTestResults(hitTestSource);
+const hitTestResults=frame.getHitTestResults(hitTestSource);
 
 if(hitTestResults.length){
 
-const hit = hitTestResults[0];
+const hit=hitTestResults[0];
 
-reticle.visible = true;
+reticle.visible=true;
 
 reticle.matrix.fromArray(
 hit.getPose(referenceSpace).transform.matrix
@@ -272,7 +282,7 @@ hit.getPose(referenceSpace).transform.matrix
 
 }else{
 
-reticle.visible = false;
+reticle.visible=false;
 
 }
 
@@ -283,16 +293,6 @@ reticle.visible = false;
 renderer.render(scene,camera);
 
 }
-
-let hitTestSource = null;
-let hitTestSourceRequested = false;
-
-window.addEventListener("click", function(event){
-
-mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-});
 
 </script>
 
